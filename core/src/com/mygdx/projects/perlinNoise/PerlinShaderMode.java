@@ -4,12 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.RandomXS128;
@@ -29,7 +27,9 @@ import java.util.Set;
 
 public class PerlinShaderMode extends InputAdapter implements Screen {
 
-    static final float CELL_SIZE = 10;
+    static final float CELL_SIZE = 100;
+    static final int OCTAVES = 8;
+
     static final int WIDTH = Gdx.graphics.getWidth();
     static final int HEIGHT = Gdx.graphics.getHeight();
 
@@ -48,10 +48,13 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
     private final OrthographicCamera camera = new OrthographicCamera(WIDTH, HEIGHT);
 
     private final Set<Integer> keyPress = new HashSet<>();
+    private int scroll = 0;
+
     private final IntBuffer transposeBuffer;
     private final FloatBuffer directBuffer;
     private final FloatBuffer cameraBuffer;
-    private int scroll = 0;
+    private final FrameBuffer frameBuffer;
+
     private ShaderProgram shader;
 
     private int u_octaves;
@@ -61,6 +64,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
     private int u_projection;
 
     private Mesh mesh;
+    private boolean screenShot = false;
 
     public PerlinShaderMode() {
         Vector2 tmp = new Vector2();
@@ -89,6 +93,8 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
 
         cameraBuffer = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         cameraBuffer.put(camera.invProjectionView.getValues()).position(0);
+
+        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888,WIDTH,HEIGHT,false,false);
     }
 
     private float getAngle() {
@@ -107,7 +113,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
                 Gdx.app.exit();
                 break;
             case Input.Keys.F:
-//                updateField = !updateField;
+                screenShot = true;
                 break;
             default:
                 return false;
@@ -214,23 +220,25 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
             cameraBuffer.put(camera.invProjectionView.getValues()).position(0);
         }
     }
-
+    Texture texture = null;
     @Override
     public void render(float delta) {
 
         update(delta);
-
 
         final GL20 gl = Gdx.gl20;
 
         gl.glClearColor(0, 0, 0, 1);
         gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+
+        if (screenShot)
+            frameBuffer.begin();
         shader.begin();
 
         gl.glUniformMatrix4fv(u_projection, 1, false, cameraBuffer);
 
-        gl.glUniform1i(u_octaves, 8);
+        gl.glUniform1i(u_octaves, OCTAVES);
         gl.glUniform1f(u_cellSize, CELL_SIZE);
         gl.glUniform1iv(u_transitions, 1, transposeBuffer);
         gl.glUniform2fv(u_directions, 1, directBuffer);
@@ -238,7 +246,12 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         mesh.render(shader, GL20.GL_POINTS);
 
         shader.end();
+        if (screenShot) {
+            screenShot = false;
+            frameBuffer.end();
+            texture = frameBuffer.getColorBufferTexture();
 
+        }
         batch.begin();
         font.draw(batch, Float.toString(fpsCounter.getFps()), 0, Gdx.graphics.getHeight());
         batch.end();

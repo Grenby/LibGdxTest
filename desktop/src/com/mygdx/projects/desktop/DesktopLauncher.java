@@ -7,11 +7,12 @@ import com.mygdx.projects.Start;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-//		config.title="name";
-//		config.fullscreen=true;
-//		config.vSyncEnabled = true;
-//		config.height = 1920 ;
-//		config.width = 1080;
+		//config.backgroundFPS
+		config.title="name";
+		config.fullscreen=true;
+		config.vSyncEnabled = true;
+		config.height = 1920 ;
+		config.width = 1080;
 		new LwjglApplication(new Start(), config);
 	}
 }

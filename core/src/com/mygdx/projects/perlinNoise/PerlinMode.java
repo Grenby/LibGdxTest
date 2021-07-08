@@ -10,7 +10,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
+import com.mygdx.projects.searchWay.Cell;
 
 public class PerlinMode extends InputAdapter implements Screen {
 
@@ -20,7 +20,8 @@ public class PerlinMode extends InputAdapter implements Screen {
 
     private final ShapeRenderer renderer = new ShapeRenderer();
 
-    Pixmap mep = new Pixmap(WIDTH, HEIGHT, Pixmap.Format.RGBA8888);
+    private final Pixmap pixelMap = new Pixmap(WIDTH, HEIGHT, Pixmap.Format.RGBA8888);
+    private final float [][] map = new float[WIDTH][HEIGHT];
     Texture t;
     SpriteBatch batch = new SpriteBatch();
 
@@ -44,26 +45,46 @@ public class PerlinMode extends InputAdapter implements Screen {
         return true;
     }
 
+
     @Override
     public void show() {
-        System.out.println(HEIGHT);
-        System.out.println(WIDTH);
         Gdx.input.setInputProcessor(this);
         int cellSize = 100;
+        addNoise(cellSize,8);
+        cellSize = 50;
+        addNoise(cellSize,4);
+        cellSize = 100;
+        addNoise(cellSize,16);
 
+        for (int i=0;i<WIDTH;i++){
+            for (int j=0;j<HEIGHT;j++){
+                float c = map[i][j];
+                if (c<0.5f)
+                    pixelMap.setColor(0,0.4f,1,1);
+                else if (c>0.6)
+                    pixelMap.setColor(1-c*c,1-c,c*c,1);
+                else
+                    pixelMap.setColor(c,c,c,1);
+                pixelMap.drawPixel(i,j);
+            }
+        }
+        t = new Texture(pixelMap);
+        pixelMap.dispose();
+        System.out.println("adding noise is done");
+    }
+
+    private void addNoise(int cellSize,int octaves) {
         for (int i = 0; i < WIDTH; i++) {
             for (int j = 0; j < HEIGHT; j++) {
                 float x = (float) i / cellSize;
                 float y = (float) j / cellSize;
-                float c = noise.getNoise(x, y, 8, 0.5f);
-                mep.setColor(getColor(c));
-                mep.drawPixel(i, j);
+                float c = noise.getNoise(x, y, octaves, 0.5f);
+                map[i][j]/=2;
+                float old = map[i][j];
+                c = old==0? c : (c+old);
+                map[i][j]=c;
             }
         }
-
-        t = new Texture(mep);
-        mep.dispose();
-        System.out.println(1);
     }
 
     @Override
