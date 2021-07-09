@@ -9,8 +9,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
+import com.mygdx.projects.Resource;
 import com.mygdx.projects.Utils.FPSCounter;
-import com.mygdx.projects.Utils.Fonts;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,7 +38,7 @@ public class LifeScreen implements Screen, InputProcessor {
     private final Vector2 fieldPos = new Vector2(-f.width*SIZE/2.f,-f.height*SIZE/2.f);
 
     private final FPSCounter fpsCounter = new FPSCounter(10);
-    private final BitmapFont font = Fonts.getFonts();
+    private final BitmapFont font = Resource.getFont();
 
 
     private boolean updateField = false;

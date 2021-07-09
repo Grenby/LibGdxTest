@@ -9,8 +9,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.mygdx.projects.Resource;
 import com.mygdx.projects.Utils.FPSCounter;
-import com.mygdx.projects.Utils.Fonts;
 
 public class TestScreen1 implements Screen {
 
@@ -20,7 +20,7 @@ public class TestScreen1 implements Screen {
     Stage stage;
     Group group;
 
-    BitmapFont font = Fonts.getFonts();
+    BitmapFont font = Resource.getFont();
     SpriteBatch batch = new SpriteBatch();
     ShapeRenderer renderer = new ShapeRenderer();
 

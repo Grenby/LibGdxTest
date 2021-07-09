@@ -2,6 +2,8 @@ varying vec2 v_pos;
 
 const int N = 256;
 
+uniform float u_amplitude;
+uniform float u_frequency;
 uniform int u_octaves;
 uniform int[512] u_transitions;
 uniform float u_cellSize;
@@ -40,13 +42,13 @@ float getNoise(float x, float y, int octaves){
     float amplitude = 1;
     float max = 0;
     float res = 0;
-    while (octaves-1 > 0){
+    while (octaves-1 >= 0){
         octaves--;
         max += amplitude;
         res += getNoise(x,y) * amplitude;
-        amplitude *= 0.5;
-        x *= 2;
-        y *= 2;
+        amplitude *= u_amplitude;
+        x *= u_frequency;
+        y *= u_frequency;
     }
     return res/max;
 }
@@ -54,14 +56,15 @@ float getNoise(float x, float y, int octaves){
 void main() {
     float c = getNoise(v_pos.x/u_cellSize,v_pos.y/u_cellSize,u_octaves);
     //c = u_transitions[1];
-    c = qunticCurve(c);
-    if (c<0.5f)
-    gl_FragColor = vec4(c*c,c*c,1-c*c,1);
-    else if (c>0.7 && c<0.8)
-    gl_FragColor = vec4(c,c/2 + (1-c)*(1-c),c/3,1);
-    else if (c>0.8){
-        gl_FragColor = vec4(1,1,1,1);
-    }
-    else
-    gl_FragColor = vec4((1-c)/5,1-c ,(1-c)*3/5,1);
+    //c = qunticCurve(c);
+//    if (c<0.5f)
+//    gl_FragColor = vec4(c*c,c*c,1-c*c,1);
+//    else if (c>0.7 && c<0.8)
+//    gl_FragColor = vec4(c,c/2 + (1-c)*(1-c),c/3,1);
+//    else if (c>0.8){
+//        gl_FragColor = vec4(1,1,1,1);
+//    }
+//    else
+//    gl_FragColor = vec4((1-c)/5,1-c ,(1-c)*3/5,1);
+    gl_FragColor = vec4(c,c,c,1);
 }

@@ -1,20 +1,18 @@
 package com.mygdx.projects.perlinNoise;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import com.mygdx.projects.Utils.FPSCounter;
-import com.mygdx.projects.Utils.Fonts;
+import com.mygdx.projects.Resource;
+import com.mygdx.projects.Utils.FPSui;
 import com.mygdx.projects.Utils.MyMath;
 
 import java.nio.ByteBuffer;
@@ -27,8 +25,6 @@ import java.util.Set;
 
 public class PerlinShaderMode extends InputAdapter implements Screen {
 
-    static final float CELL_SIZE = 100;
-    static final int OCTAVES = 8;
 
     static final int WIDTH = Gdx.graphics.getWidth();
     static final int HEIGHT = Gdx.graphics.getHeight();
@@ -41,10 +37,6 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
 
     private final RandomXS128 random = new RandomXS128();
 
-    private final FPSCounter fpsCounter = new FPSCounter(10);
-    private final SpriteBatch batch = new SpriteBatch();
-    private final BitmapFont font = Fonts.getFonts();
-
     private final OrthographicCamera camera = new OrthographicCamera(WIDTH, HEIGHT);
 
     private final Set<Integer> keyPress = new HashSet<>();
@@ -53,20 +45,28 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
     private final IntBuffer transposeBuffer;
     private final FloatBuffer directBuffer;
     private final FloatBuffer cameraBuffer;
-    private final FrameBuffer frameBuffer;
 
     private ShaderProgram shader;
+
+    private float frequency = 2f;
+    private float amplitude = 0.5f;
+    private float cellSize = 100;
+    private int octaves = 8;
+
 
     private int u_octaves;
     private int u_cellSize;
     private int u_transitions;
     private int u_directions;
+    private int u_amplitude;
+    private int u_frequency;
     private int u_projection;
 
     private Mesh mesh;
-    private boolean screenShot = false;
 
-    public PerlinShaderMode() {
+    private final Stage uiStage = new Stage();
+
+    public  PerlinShaderMode() {
         Vector2 tmp = new Vector2();
         int NUM = 256;
         int[] transitions = new int[NUM * 2];
@@ -94,7 +94,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         cameraBuffer = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         cameraBuffer.put(camera.invProjectionView.getValues()).position(0);
 
-        frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888,WIDTH,HEIGHT,false,false);
+   //     frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888,WIDTH,HEIGHT,false,false);
     }
 
     private float getAngle() {
@@ -113,7 +113,6 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
                 Gdx.app.exit();
                 break;
             case Input.Keys.F:
-                screenShot = true;
                 break;
             default:
                 return false;
@@ -136,10 +135,114 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         return true;
     }
 
+    private void initUI(){
+        Skin skin = Resource.getUISkin();
+        VerticalGroup root = new VerticalGroup();
+        VerticalGroup verticalGroup = new VerticalGroup();
+        TextButton textButton = new TextButton("info",skin,"toggle");
+
+        verticalGroup.setVisible(false);
+
+        textButton.addListener(new InputListener(){
+            @Override
+            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                verticalGroup.setVisible(!textButton.isChecked());
+                return super.touchDown(event, x, y, pointer, button);
+            }
+        });
+
+        root.addActor(textButton);
+        root.addActor(verticalGroup);
+        Slider slider;
+        HorizontalGroup horizontalGroup;
+        {
+            final Label textValue = new Label(Integer.toString(octaves), skin);
+            slider = new Slider(1, 16, 1, false, skin) {
+                @Override
+                public boolean setValue(float value) {
+                    boolean set = super.setValue(value);
+                    textValue.setText(Integer.toString((int) getValue()));
+                    octaves = (int) getValue();
+                    return set;
+                }
+            };
+            slider.setValue(octaves);
+            horizontalGroup = new HorizontalGroup();
+            horizontalGroup.addActor(new Label("Octaves: ", skin));
+            horizontalGroup.addActor(slider);
+            horizontalGroup.addActor(textValue);
+            verticalGroup.addActor(horizontalGroup);
+        }
+        {
+            final Label textValue = new Label(Float.toString(cellSize), skin);
+            slider = new Slider(1, 255, 1, false, skin) {
+                @Override
+                public boolean setValue(float value) {
+                    boolean set = super.setValue(value);
+                    textValue.setText(Integer.toString((int)getValue()));
+                    cellSize =getValue();
+                    return set;
+                }
+            };
+            slider.setValue(cellSize);
+            horizontalGroup = new HorizontalGroup();
+            horizontalGroup.addActor(new Label("Size: ", skin));
+            horizontalGroup.addActor(slider);
+            horizontalGroup.addActor(textValue);
+            verticalGroup.addActor(horizontalGroup);
+        }
+        {
+            final Label textValue = new Label(Float.toString(amplitude), skin);
+            slider = new Slider(0.01f, 0.99f, 0.01f, false, skin) {
+                @Override
+                public boolean setValue(float value) {
+                    boolean set = super.setValue(value);
+                    textValue.setText(Float.toString((int)(100*getValue())/100f));
+                    amplitude = getValue();
+                    return set;
+                }
+            };
+            slider.setValue(amplitude);
+            horizontalGroup = new HorizontalGroup();
+            horizontalGroup.addActor(new Label("Amplitude: ", skin));
+            horizontalGroup.addActor(slider);
+            horizontalGroup.addActor(textValue);
+            verticalGroup.addActor(horizontalGroup);
+        }
+        {
+            final Label textValue = new Label(Float.toString(frequency), skin);
+            slider = new Slider(1, 20, 0.05f, false, skin) {
+                @Override
+                public boolean setValue(float value) {
+                    boolean set = super.setValue(value);
+                    textValue.setText(Float.toString((int)(100*getValue())/100f));
+                    frequency = getValue();
+                    return set;
+                }
+            };
+            slider.setValue(frequency);
+            horizontalGroup = new HorizontalGroup();
+            horizontalGroup.addActor(new Label("Frequency: ", skin));
+            horizontalGroup.addActor(slider);
+            horizontalGroup.addActor(textValue);
+            verticalGroup.addActor(horizontalGroup);
+        }
+        verticalGroup.addActor(new FPSui(skin));
+        verticalGroup.left();
+        verticalGroup.columnLeft();
+        root.setPosition(0,HEIGHT - verticalGroup.getHeight());
+        root.getChildren().get(0).setWidth(verticalGroup.getWidth());
+        root.left();
+        root.columnLeft();
+        uiStage.addActor(root);
+    }
+
     @Override
     public void show() {
+        Gdx.input.setInputProcessor(new InputMultiplexer(uiStage,this));
 
-        Gdx.input.setInputProcessor(this);
+        initUI();
+
         //no need for depth...
         Gdx.gl.glDepthMask(false);
 
@@ -158,6 +261,8 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         u_cellSize = shader.getUniformLocation("u_cellSize");
         u_transitions = shader.getUniformLocation("u_transitions[0]");
         u_directions = shader.getUniformLocation("u_directions[0]");
+        u_frequency = shader.getUniformLocation("u_frequency");
+        u_amplitude = shader.getUniformLocation("u_amplitude");
 
         u_projection = shader.getUniformLocation("u_projection");
 
@@ -179,7 +284,8 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
     }
 
     void update(float delta) {
-        fpsCounter.update(delta);
+
+        uiStage.act(delta);
 
         final float DELTA_ZOOM = 1.1f * delta;
         final float DELTA_CAMERA = 1000f * delta;
@@ -220,7 +326,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
             cameraBuffer.put(camera.invProjectionView.getValues()).position(0);
         }
     }
-    Texture texture = null;
+
     @Override
     public void render(float delta) {
 
@@ -232,29 +338,22 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 
-        if (screenShot)
-            frameBuffer.begin();
         shader.begin();
 
         gl.glUniformMatrix4fv(u_projection, 1, false, cameraBuffer);
 
-        gl.glUniform1i(u_octaves, OCTAVES);
-        gl.glUniform1f(u_cellSize, CELL_SIZE);
+        gl.glUniform1i(u_octaves, octaves);
+        gl.glUniform1f(u_cellSize, cellSize);
         gl.glUniform1iv(u_transitions, 1, transposeBuffer);
         gl.glUniform2fv(u_directions, 1, directBuffer);
+        gl.glUniform1f(u_amplitude, amplitude);
+        gl.glUniform1f(u_frequency,frequency);
 
         mesh.render(shader, GL20.GL_POINTS);
 
         shader.end();
-        if (screenShot) {
-            screenShot = false;
-            frameBuffer.end();
-            texture = frameBuffer.getColorBufferTexture();
 
-        }
-        batch.begin();
-        font.draw(batch, Float.toString(fpsCounter.getFps()), 0, Gdx.graphics.getHeight());
-        batch.end();
+        uiStage.draw();
 
     }
 
