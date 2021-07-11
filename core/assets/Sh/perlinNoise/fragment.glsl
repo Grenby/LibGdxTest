@@ -2,6 +2,10 @@ varying vec2 v_pos;
 
 const int N = 256;
 
+uniform float u_1;
+uniform float u_2;
+uniform float u_3;
+
 uniform float u_amplitude;
 uniform float u_frequency;
 uniform int u_octaves;
@@ -55,8 +59,8 @@ float getNoise(float x, float y, int octaves){
 
 void main() {
     float c = getNoise(v_pos.x/u_cellSize,v_pos.y/u_cellSize,u_octaves);
-    //c = u_transitions[1];
-    //c = qunticCurve(c);
+    c = qunticCurve(qunticCurve(qunticCurve(c)));
+    //c = (1+sin(6.28*sin(3.14/2*c)))/2;
 //    if (c<0.5f)
 //    gl_FragColor = vec4(c*c,c*c,1-c*c,1);
 //    else if (c>0.7 && c<0.8)

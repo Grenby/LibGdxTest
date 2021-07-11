@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGeneratorLoader;
 import com.badlogic.gdx.graphics.g2d.freetype.FreetypeFontLoader;
+import com.mygdx.projects.mazeGen.MazeMode;
 import com.mygdx.projects.mazeGen.MenuMode;
 import com.mygdx.projects.perlinNoise.PerlinMode;
 import com.mygdx.projects.perlinNoise.PerlinShaderMode;
@@ -26,6 +27,6 @@ public class Start extends Game {
     public void create() {
         Resource.init();
         //Resource.instance().loadDefaultTextures();
-        setScreen(new PerlinShaderMode());
+        setScreen(new MazeMode());
     }
 }

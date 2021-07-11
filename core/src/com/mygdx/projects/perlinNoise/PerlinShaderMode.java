@@ -45,7 +45,6 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
     private final IntBuffer transposeBuffer;
     private final FloatBuffer directBuffer;
     private final FloatBuffer cameraBuffer;
-
     private ShaderProgram shader;
 
     private float frequency = 2f;
@@ -91,10 +90,14 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         directBuffer = ByteBuffer.allocateDirect(directions.length * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         directBuffer.put(directions).position(0);
 
+        camera.position.set(WIDTH/2f,HEIGHT/2f,0);
+        camera.update();
+
         cameraBuffer = ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         cameraBuffer.put(camera.invProjectionView.getValues()).position(0);
 
    //     frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888,WIDTH,HEIGHT,false,false);
+
     }
 
     private float getAngle() {
@@ -151,7 +154,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
             }
         });
 
-        root.addActor(textButton);
+        uiStage.addActor(textButton);
         root.addActor(verticalGroup);
         Slider slider;
         HorizontalGroup horizontalGroup;
@@ -231,7 +234,6 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         verticalGroup.left();
         verticalGroup.columnLeft();
         root.setPosition(0,HEIGHT - verticalGroup.getHeight());
-        root.getChildren().get(0).setWidth(verticalGroup.getWidth());
         root.left();
         root.columnLeft();
         uiStage.addActor(root);
@@ -267,7 +269,6 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         u_projection = shader.getUniformLocation("u_projection");
 
         mesh = new Mesh(true, WIDTH * HEIGHT, 0, VertexAttribute.Position());
-
         updateMesh();
     }
 
@@ -348,7 +349,7 @@ public class PerlinShaderMode extends InputAdapter implements Screen {
         gl.glUniform2fv(u_directions, 1, directBuffer);
         gl.glUniform1f(u_amplitude, amplitude);
         gl.glUniform1f(u_frequency,frequency);
-
+        //gl.glUniform1f(u_1,arr[0]);
         mesh.render(shader, GL20.GL_POINTS);
 
         shader.end();
